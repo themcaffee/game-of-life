@@ -11,30 +11,27 @@ BLACK = 0, 0, 0
 history = []
 
 
-def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location):
-    pygame.init()
-
+def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui):
     # Create the game grid
     game_grid = create_game_grid(grid_size)
-
-    size = width, height = grid_size * 10, grid_size * 10
-    screen = pygame.display.set_mode(size)
-    done = False
-
     # Add food
     game_grid = randomly_add_food(game_grid, initial_food_rate)
-
     # Add organisms
     game_grid = randomly_add_organisms(game_grid, initial_organism_rate)
 
+    if gui:
+        pygame.init()
+        size = width, height = grid_size * 10, grid_size * 10
+        screen = pygame.display.set_mode(size)
+
+    done = False
     steps = 0
 
     while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-
-        screen.fill(BLACK)
+        if gui:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
 
         # Let all organisms do one action
         game_grid = organism_action_step(game_grid)
@@ -48,13 +45,15 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
         else:
             steps += 1
 
-        # Draw stuff onto screen
-        draw_objects(game_grid, screen)
+        if gui:
+            # Draw stuff onto screen
+            screen.fill(BLACK)
+            draw_objects(game_grid, screen)
+            # Update the screen with what has been drawn
+            pygame.display.flip()
 
-        # Update the screen with what has been drawn
-        pygame.display.flip()
-
-    pygame.quit()
+    if gui:
+        pygame.quit()
 
 
 def organism_action_step(game_grid):
@@ -138,7 +137,8 @@ if __name__ == '__main__':
     parser.add_argument("--initial-food-spawn", help="The initial food spawn food rate", type=float, default=0.2)
     parser.add_argument("--initial-organism-spawn", help="The initial organism spawn rate", type=float, default=0.02)
     parser.add_argument("--data-output-location", help="Where to output the recorded data", default="data/life.csv")
+    parser.add_argument("--no-gui", help="Don't render any GUI elements. Useful for quick data collection", action="store_true")
     args = parser.parse_args()
     for i in range(args.games):
-        main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location)
+        main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui)
 
