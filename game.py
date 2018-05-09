@@ -47,13 +47,12 @@ def main():
 
 
 def organism_action_step(game_grid):
-    new_grid = copy.deepcopy(game_grid)
     for row in range(len(game_grid)):
         for column in range(len(game_grid[0])):
-            obj = new_grid[row][column]
+            obj = game_grid[row][column]
             if type(obj) == Organism:
-                new_grid = obj.random_action(new_grid)
-    return new_grid
+                game_grid = obj.random_action(game_grid)
+    return game_grid
 
 
 def create_game_grid():

@@ -5,6 +5,7 @@ BLUE = (0, 0, 255)
 INITIAL_ENERGY = 100
 MAX_ENERGY = 200
 ENERGY_FROM_EATING = 5
+ATTEMPT_LIMIT = 50
 
 
 class Organism:
@@ -13,17 +14,12 @@ class Organism:
         self.width = 10
         self.height = 10
         # Set position in game grid
-        self.row = row
-        self.column = column
-        # Set position on the actual screen
-        left = row * self.width
-        top = column * self.height
-        self.rect = [left, top, self.width, self.height]
+        self._set_position(row, column)
         # Make solid
         self.generation = 0
         self.genome = genome
         self.parent_ids = parent_ids
-        self.energy = 10
+        self.energy = INITIAL_ENERGY
 
     def _out_of_bounds(self, game_grid, row, column):
         if column < 0:
@@ -40,6 +36,13 @@ class Organism:
     def _die(self, game_grid):
         game_grid[self.row][self.column] = None
 
+    def _set_position(self, row, column):
+        self.row = row
+        self.column = column
+        left = row * self.width
+        top = column * self.height
+        self.rect = [left, top, self.width, self.height]
+
     def _move_to(self, game_grid, row, column):
         if self._out_of_bounds(game_grid, row, column):
             return False
@@ -52,6 +55,7 @@ class Organism:
 
         game_grid[self.row][self.column] = None
         game_grid[row][column] = self
+        self._set_position(row, column)
         return game_grid
 
     def move_up(self, game_grid):
@@ -118,7 +122,8 @@ class Organism:
         return game_grid
 
     def random_action(self, game_grid):
-        while True:
+        attempt = 0
+        while attempt <= ATTEMPT_LIMIT:
             choice = np.random.randint(0, 12)
             if choice == 0:
                 new_grid = self.move_up(game_grid)
@@ -149,6 +154,9 @@ class Organism:
 
             if new_grid:
                 return new_grid
+            else:
+                attempt += 1
+        return self.do_nothing(game_grid)
 
 
 
