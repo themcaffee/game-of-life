@@ -1,35 +1,31 @@
 import pygame
 import random
 import csv
+import argparse
 
 from food import Food
 from organism import Organism
 
 BLACK = 0, 0, 0
-GAME_GRID_SIZE = 100
-ADD_FOOD_PROBABILITY = 0.2
-ADD_ORGANISM_PROBABILITY = 0.02
-GAMES_TO_PLAY = 10
-
 
 history = []
 
 
-def main():
+def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location):
     pygame.init()
 
     # Create the game grid
-    game_grid = create_game_grid()
+    game_grid = create_game_grid(grid_size)
 
-    size = width, height = GAME_GRID_SIZE * 10, GAME_GRID_SIZE * 10
+    size = width, height = grid_size * 10, grid_size * 10
     screen = pygame.display.set_mode(size)
     done = False
 
     # Add food
-    game_grid = randomly_add_food(game_grid, ADD_FOOD_PROBABILITY)
+    game_grid = randomly_add_food(game_grid, initial_food_rate)
 
     # Add organisms
-    game_grid = randomly_add_organisms(game_grid, ADD_ORGANISM_PROBABILITY)
+    game_grid = randomly_add_organisms(game_grid, initial_organism_rate)
 
     steps = 0
 
@@ -48,7 +44,7 @@ def main():
             print("All organisms are dead after " + str(steps) + " steps :D")
             done = True
             print("Writing out data to csv")
-            write_to_csv(history)
+            write_to_csv(history, data_output_location)
         else:
             steps += 1
 
@@ -85,11 +81,11 @@ def organisms_left(game_grid):
     return count
 
 
-def create_game_grid():
+def create_game_grid(grid_size):
     game_grid = []
-    for row in range(GAME_GRID_SIZE):
+    for row in range(grid_size):
         game_grid.append([])
-        for column in range(GAME_GRID_SIZE):
+        for column in range(grid_size):
             game_grid[row].append(None)
     return game_grid
 
@@ -124,18 +120,25 @@ def decision(probability):
     return random.random() < probability
 
 
-def write_to_csv(data):
+def write_to_csv(data, data_output_location):
     # Expect data format to be
     # [
     #   [(visible tiles), 'action taken', 'reward that step (difference between energy before/after)']
     # ]
-    with open('data/life.csv', 'a', newline='') as csvfile:
+    with open(data_output_location, 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerows(data)
 
 
 if __name__ == '__main__':
-    for i in range(GAMES_TO_PLAY):
-        main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--games", help="Number of games to play in a row", type=int, default=1)
+    parser.add_argument("--grid-size", help="The grid size", type=int, default=100)
+    parser.add_argument("--initial-food-spawn", help="The initial food spawn food rate", type=float, default=0.2)
+    parser.add_argument("--initial-organism-spawn", help="The initial organism spawn rate", type=float, default=0.02)
+    parser.add_argument("--data-output-location", help="Where to output the recorded data", default="data/life.csv")
+    args = parser.parse_args()
+    for i in range(args.games):
+        main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location)
 
