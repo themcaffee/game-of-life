@@ -11,6 +11,9 @@ ADD_FOOD_PROBABILITY = 0.2
 ADD_ORGANISM_PROBABILITY = 0.02
 
 
+history = []
+
+
 def main():
     pygame.init()
 
@@ -43,6 +46,8 @@ def main():
         if organisms_left(game_grid) == 0:
             print("All organisms are dead after " + str(steps) + " steps :D")
             done = True
+            print("Writing out data to csv")
+            write_to_csv(history)
         else:
             steps += 1
 
@@ -60,7 +65,8 @@ def organism_action_step(game_grid):
         for column in range(len(game_grid[0])):
             obj = game_grid[row][column]
             if type(obj) == Organism:
-                game_grid = obj.random_action(game_grid)
+                game_grid, energy, visible_tiles, choice = obj.random_action(game_grid)
+                history.append([visible_tiles[0], visible_tiles[1], visible_tiles[2], visible_tiles[3], visible_tiles[4], visible_tiles[5], visible_tiles[6], visible_tiles[7], choice, energy])
     return game_grid
 
 
@@ -117,7 +123,7 @@ def write_to_csv(data):
     # [
     #   ['Top value', 'Top Left Value', 'Left value', 'Bottom left value', 'bottom value', 'bottom right value', 'Right value', 'top right value', 'action taken', 'reward that step (difference between energy before/after)']
     # ]
-    with open('data/life.csv', 'w', newline='') as csvfile:
+    with open('data/life.csv', 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerows(data)
