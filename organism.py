@@ -2,22 +2,21 @@ import pygame
 
 
 BLUE = (0, 0, 255)
-WIDTH, HEIGHT = 20
 
 
-class Organism(pygame.draw.rect):
-    def __init__(self, Surface, row, column, genome=None, parent_ids=None):
-        self.Surface = Surface
+class Organism:
+    def __init__(self, row, column, genome=None, parent_ids=None):
         self.color = BLUE
+        self.width = 10
+        self.height = 10
         # Set position in game grid
         self.row = row
         self.column = column
         # Set position on the actual screen
-        left = row * WIDTH
-        top = column * HEIGHT
-        self.Rect = [left, top, WIDTH, HEIGHT]
+        left = row * self.width
+        top = column * self.height
+        self.rect = [left, top, self.width, self.height]
         # Make solid
-        self.width = 0
         self.generation = 0
         self.genome = genome
         self.parent_ids = parent_ids
