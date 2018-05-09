@@ -127,7 +127,7 @@ def decision(probability):
 def write_to_csv(data):
     # Expect data format to be
     # [
-    #   ['Top value', 'Top Left Value', 'Left value', 'Bottom left value', 'bottom value', 'bottom right value', 'Right value', 'top right value', 'action taken', 'reward that step (difference between energy before/after)']
+    #   [(visible tiles), 'action taken', 'reward that step (difference between energy before/after)']
     # ]
     with open('data/life.csv', 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',',

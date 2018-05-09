@@ -1,6 +1,4 @@
-Game of Life
-
-=====
+# Game of Life
 
 
 2 dimensional grid
@@ -34,3 +32,10 @@ Objects:
 ```
 python main.py
 ```
+
+
+#### TODOs
+
+- Toggleable visualization
+- Respawning food
+- Cli control of different aspects
