@@ -9,6 +9,7 @@ from organism import Organism
 BLACK = 0, 0, 0
 
 history = []
+FOOD_RESPAWN_RATE = 0.00005
 
 
 def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location):
@@ -35,6 +36,8 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
                 done = True
 
         screen.fill(BLACK)
+
+        randomly_add_food(game_grid, FOOD_RESPAWN_RATE)
 
         # Let all organisms do one action
         game_grid = organism_action_step(game_grid)
@@ -93,7 +96,7 @@ def create_game_grid(grid_size):
 def randomly_add_food(game_grid, probability):
     for row in range(len(game_grid)):
         for column in range(len(game_grid[row])):
-            if decision(probability):
+            if decision(probability) and type(game_grid[row][column]) != Organism:
                 game_grid[row][column] = Food(row, column)
     return game_grid
 
