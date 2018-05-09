@@ -1,6 +1,3 @@
-import pygame
-
-
 GREEN = (0, 255, 0)
 
 
