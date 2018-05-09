@@ -1,6 +1,6 @@
 import pygame
 import random
-import copy
+import csv
 
 from food import Food
 from organism import Organism
@@ -8,7 +8,7 @@ from organism import Organism
 BLACK = 0, 0, 0
 GAME_GRID_SIZE = 100
 ADD_FOOD_PROBABILITY = 0.2
-ADD_ORGANISM_PROBABILITY = 0.01
+ADD_ORGANISM_PROBABILITY = 0.02
 
 
 def main():
@@ -27,6 +27,8 @@ def main():
     # Add organisms
     game_grid = randomly_add_organisms(game_grid, ADD_ORGANISM_PROBABILITY)
 
+    steps = 0
+
     while not done:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -36,6 +38,13 @@ def main():
 
         # Let all organisms do one action
         game_grid = organism_action_step(game_grid)
+
+        # Check if all of the organisms are dead
+        if organisms_left(game_grid) == 0:
+            print("All organisms are dead after " + str(steps) + " steps :D")
+            done = True
+        else:
+            steps += 1
 
         # Draw stuff onto screen
         draw_objects(game_grid, screen)
@@ -53,6 +62,15 @@ def organism_action_step(game_grid):
             if type(obj) == Organism:
                 game_grid = obj.random_action(game_grid)
     return game_grid
+
+
+def organisms_left(game_grid):
+    count = 0
+    for row in range(len(game_grid)):
+        for column in range(len(game_grid[0])):
+            if type(game_grid[row][column]) == Organism:
+                count += 1
+    return count
 
 
 def create_game_grid():
@@ -92,6 +110,17 @@ def draw_objects(game_grid, screen):
 
 def decision(probability):
     return random.random() < probability
+
+
+def write_to_csv(data):
+    # Expect data format to be
+    # [
+    #   ['Top value', 'Top Left Value', 'Left value', 'Bottom left value', 'bottom value', 'bottom right value', 'Right value', 'top right value', 'action taken', 'reward that step (difference between energy before/after)']
+    # ]
+    with open('data/life.csv', 'w', newline='') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=',',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        spamwriter.writerows(data)
 
 
 if __name__ == '__main__':
