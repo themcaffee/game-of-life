@@ -9,6 +9,7 @@ BLACK = 0, 0, 0
 GAME_GRID_SIZE = 100
 ADD_FOOD_PROBABILITY = 0.2
 ADD_ORGANISM_PROBABILITY = 0.02
+GAMES_TO_PLAY = 2
 
 
 history = []
@@ -130,4 +131,6 @@ def write_to_csv(data):
 
 
 if __name__ == '__main__':
-    main()
+    for i in range(GAMES_TO_PLAY):
+        main()
+
