@@ -28,3 +28,9 @@ Objects:
   - Static
   - Randomly placed throughout the world and slowly regenerated
     - How does differing the rate of regeneration change behavior?
+
+### How to Run
+
+```
+python main.py
+```
