@@ -23,51 +23,16 @@ class Organism:
         self.energy = INITIAL_ENERGY
 
     def _get_visible_tiles(self, game_grid):
-        if not self._out_of_bounds(game_grid, self.row, self.column - 1):
-            top = game_grid[self.row][self.column - 1]
-        else:
-            top = -1
-
-        if not self._out_of_bounds(game_grid, self.row - 1, self.column - 1):
-            top_left = game_grid[self.row - 1][self.column - 1]
-        else:
-            top_left = -1
-
-        if not self._out_of_bounds(game_grid, self.row - 1, self.column):
-            left = game_grid[self.row - 1][self.column]
-        else:
-            left = -1
-
-        if not self._out_of_bounds(game_grid, self.row - 1, self.column + 1):
-            bottom_left = game_grid[self.row - 1][self.column + 1]
-        else:
-            bottom_left = -1
-
-        if not self._out_of_bounds(game_grid, self.row, self.column + 1):
-            bottom = game_grid[self.row][self.column + 1]
-        else:
-            bottom = -1
-
-        if not self._out_of_bounds(game_grid, self.row + 1, self.column + 1):
-            bottom_right = game_grid[self.row + 1][self.column + 1]
-        else:
-            bottom_right = -1
-
-        if not self._out_of_bounds(game_grid, self.row + 1, self.column):
-            right = game_grid[self.row + 1][self.column]
-        else:
-            right = -1
-
-        if not self._out_of_bounds(game_grid, self.row + 1, self.column - 1):
-            top_right = game_grid[self.row + 1][self.column - 1]
-        else:
-            top_right = -1
-
-        visible = [top, top_left, left, bottom_left, bottom, bottom_right, right, top_right]
-        converted_visible = []
-        for i in visible:
-            converted_visible.append(self._convert_obj_to_int_mapping(i))
-        return converted_visible
+        visible = []
+        for row_change in range(-2, 2):
+            for col_change in range(-2, 2):
+                if row_change == 0 and col_change == 0:
+                    continue
+                elif self._out_of_bounds(game_grid, self.row + row_change, self.column + col_change):
+                    visible.append(-1)
+                else:
+                    visible.append(self._convert_obj_to_int_mapping(game_grid[self.row + row_change][self.column + col_change]))
+        return visible
 
     def _convert_obj_to_int_mapping(self, obj):
         if obj == -1:

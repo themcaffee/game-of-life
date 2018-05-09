@@ -67,7 +67,12 @@ def organism_action_step(game_grid):
             obj = game_grid[row][column]
             if type(obj) == Organism:
                 game_grid, energy, visible_tiles, choice = obj.random_action(game_grid)
-                history.append([visible_tiles[0], visible_tiles[1], visible_tiles[2], visible_tiles[3], visible_tiles[4], visible_tiles[5], visible_tiles[6], visible_tiles[7], choice, energy])
+                new_record = []
+                for tile in visible_tiles:
+                    new_record.append(tile)
+                new_record.append(choice)
+                new_record.append(energy)
+                history.append(new_record)
     return game_grid
 
 
