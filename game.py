@@ -8,7 +8,7 @@ from organism import Organism
 
 BLACK = 0, 0, 0
 
-history = []
+history = {}
 
 
 def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui):
@@ -63,11 +63,15 @@ def organism_action_step(game_grid):
             if type(obj) == Organism:
                 game_grid, energy, visible_tiles, choice = obj.random_action(game_grid)
                 new_record = []
+                new_record.append(obj.id)
                 for tile in visible_tiles:
                     new_record.append(tile)
                 new_record.append(choice)
                 new_record.append(energy)
-                history.append(new_record)
+                if obj.id not in history:
+                    history[obj.id] = [new_record]
+                else:
+                    history[obj.id].append(new_record)
     return game_grid
 
 
@@ -121,13 +125,17 @@ def decision(probability):
 
 def write_to_csv(data, data_output_location):
     # Expect data format to be
-    # [
-    #   [(visible tiles), 'action taken', 'reward that step (difference between energy before/after)']
-    # ]
+    # {
+    #   'id': [[(visible tiles), 'action taken', 'reward that step (difference between energy before/after)']]
+    # }
+    history_to_write = []
+    for organism in data:
+        for row in data[organism]:
+            history_to_write.append(row)
     with open(data_output_location, 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        spamwriter.writerows(data)
+        spamwriter.writerows(history_to_write)
 
 
 if __name__ == '__main__':

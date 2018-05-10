@@ -1,3 +1,5 @@
+import uuid
+
 from food import Food
 import numpy as np
 
@@ -11,6 +13,7 @@ ENERGY_FROM_MATING = -1
 
 class Organism:
     def __init__(self, row, column, genome=None, parent_ids=None):
+        self.id = str(uuid.uuid4())
         self.color = BLUE
         self.width = 10
         self.height = 10
