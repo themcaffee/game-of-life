@@ -10,8 +10,10 @@ BLACK = 0, 0, 0
 MAX_STEPS = 1000
 
 
-def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui, games):
+def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui, games, random, store_data):
     for game in range(games):
+        history = {}
+
         # Create the game grid
         game_grid = create_game_grid(grid_size)
         # Add food
@@ -27,9 +29,15 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
         done = False
         steps = 0
 
-        while not done or steps >= MAX_STEPS:
+        while not done and steps <= MAX_STEPS:
             # Let all organisms do one action
-            game_grid = organism_predict_action_step(game_grid)
+            if random:
+                game_grid = organism_random_action_step(game_grid)
+            else:
+                game_grid = organism_predict_action_step(game_grid)
+
+            if store_data:
+                history = store_organism_data(game_grid, history)
 
             # Check if all of the organisms are dead
             if organisms_left(game_grid) == 0:
@@ -48,16 +56,46 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
                 # Update the screen with what has been drawn
                 pygame.display.flip()
 
+        if store_data:
+            write_to_csv(history, data_output_location)
+
         if gui:
             pygame.quit()
 
 
-def organism_action_step(game_grid):
+def store_organism_data(game_grid, history):
+    for row in range(len(game_grid)):
+        for column in range(len(game_grid[0])):
+            obj = game_grid[row][column]
+            if type(obj) == Organism and len(obj.memory) > 0:
+                # Get the last memory
+                state, action, reward, next_state, done = obj.memory.pop()
+                obj.remember(state, action, reward, next_state, done)
+
+                # Create the new record
+                visible_tiles = list(state[0])
+                next_visible_tiles = list(next_state[0])
+                new_record = [obj.id]
+                for tile in visible_tiles:
+                    new_record.append(tile)
+                new_record.append(action)
+                new_record.append(reward)
+                for tile in next_visible_tiles:
+                    new_record.append(tile)
+                new_record.append(done)
+
+                if obj.id not in history:
+                    history[obj.id] = []
+                history[obj.id].append(new_record)
+    return history
+
+
+def organism_random_action_step(game_grid):
     for row in range(len(game_grid)):
         for column in range(len(game_grid[0])):
             obj = game_grid[row][column]
             if type(obj) == Organism:
-                game_grid = obj.random_action(game_grid)
+                game_grid, _ = obj.random_action(game_grid)
     return game_grid
 
 
@@ -139,8 +177,10 @@ if __name__ == '__main__':
     parser.add_argument("--grid-size", help="The grid size", type=int, default=100)
     parser.add_argument("--initial-food-spawn", help="The initial food spawn food rate", type=float, default=0.2)
     parser.add_argument("--initial-organism-spawn", help="The initial organism spawn rate", type=float, default=0.002)
+    parser.add_argument("--store-data", help="Store the data in a csv", action="store_true")
     parser.add_argument("--data-output-location", help="Where to output the recorded data", default="data/life.csv")
     parser.add_argument("--no-gui", help="Don't render any GUI elements. Useful for quick data collection", action="store_true")
+    parser.add_argument("--random", help="Randomly perform actions instead of prediction", action="store_true")
     args = parser.parse_args()
-    main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui, args.games)
+    main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui, args.games, args.random, args.store_data)
 
