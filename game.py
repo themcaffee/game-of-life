@@ -57,7 +57,7 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
                 pygame.display.flip()
 
         if store_data:
-            write_to_csv(history, data_output_location)
+            write_to_csv(history, data_output_location, initial_food_rate, initial_organism_rate, grid_size)
 
         if gui:
             pygame.quit()
@@ -84,6 +84,7 @@ def store_organism_data(game_grid, history):
                     new_record.append(tile)
                 new_record.append(done)
 
+                # Add new record to history
                 if obj.id not in history:
                     history[obj.id] = []
                 history[obj.id].append(new_record)
@@ -156,7 +157,7 @@ def decision(probability):
     return random.random() < probability
 
 
-def write_to_csv(data, data_output_location):
+def write_to_csv(data, data_output_location, initial_food_spawn, initial_organism_spawn, grid_size):
     # Expect data format to be
     # {
     #   'id': [[(visible tiles), 'action taken', 'reward that step (difference between energy before/after)']]
@@ -165,7 +166,9 @@ def write_to_csv(data, data_output_location):
     for organism in data:
         for row in data[organism]:
             history_to_write.append(row)
-    with open(data_output_location, 'a', newline='') as csvfile:
+    filename = data_output_location.split(".")[0] + "_" + str(initial_food_spawn) + "_" + \
+                   str(initial_organism_spawn) + "_" + str(grid_size) + ".csv"
+    with open(filename, 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerows(history_to_write)

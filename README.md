@@ -37,4 +37,7 @@ python main.py
 #### TODOs
 
 - Store large log of initial memory and train new organisms models on it before continuing
+- Replay with a GUI given a log file (Useful for training w/o GUI and then viewing it later)
+- Create model based off genome
+- Reproduction using genomes
 
