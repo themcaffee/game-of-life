@@ -201,7 +201,6 @@ def read_from_csv(data_location, initial_food_spawn, initial_organism_spawn, gri
         for row in reader:
             if id != row[0] and id != '':
                 if len(memories[id]) < BATCH_SIZE:
-                    print("Memory length too small for batch size")
                     memories.pop(id, None)
                     ids_read -= 1
                 else:
