@@ -36,6 +36,5 @@ python main.py
 
 #### TODOs
 
-- Toggleable visualization
-- Respawning food
-- Cli control of different aspects
+- Store large log of initial memory and train new organisms models on it before continuing
+
