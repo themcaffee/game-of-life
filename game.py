@@ -8,10 +8,9 @@ from organism import Organism
 
 BLACK = 0, 0, 0
 
-history = {}
-
 
 def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui):
+    history = {}
     # Create the game grid
     game_grid = create_game_grid(grid_size)
     # Add food
@@ -34,7 +33,7 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
                     done = True
 
         # Let all organisms do one action
-        game_grid = organism_action_step(game_grid)
+        game_grid, history = organism_action_step(game_grid, history)
 
         # Check if all of the organisms are dead
         if organisms_left(game_grid) == 0:
@@ -56,30 +55,28 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
         pygame.quit()
 
 
-def organism_action_step(game_grid):
+def organism_action_step(game_grid, history):
     for row in range(len(game_grid)):
         for column in range(len(game_grid[0])):
             obj = game_grid[row][column]
             if type(obj) == Organism:
-                game_grid, reward, visible_tiles, choice = obj.random_action(game_grid)
-                new_record = [obj.id]
-                for tile in visible_tiles:
-                    new_record.append(tile)
-                new_record.append(choice)
-                new_record.append(reward)
-                if obj.id not in history:
-                    history[obj.id] = [new_record]
-                else:
-                    history[obj.id].append(new_record)
-    return game_grid
+                game_grid, history = obj.random_action(game_grid, history)
+    return game_grid, history
 
 
 def organisms_left(game_grid):
     count = 0
     for row in range(len(game_grid)):
         for column in range(len(game_grid[0])):
-            if type(game_grid[row][column]) == Organism:
-                count += 1
+            try:
+                if type(game_grid[row][column]) == Organism:
+                    count += 1
+            except Exception as e:
+                print(row)
+                print(column)
+                print(len(game_grid))
+                print(len(game_grid[0]))
+                print(game_grid[row])
     return count
 
 
