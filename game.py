@@ -2,15 +2,22 @@ import pygame
 import random
 import csv
 import argparse
+import numpy as np
 
 from food import Food
-from organism import Organism
+from organism import Organism, BATCH_SIZE
 
 BLACK = 0, 0, 0
 MAX_STEPS = 1000
 
 
-def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui, games, random, store_data):
+def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui, games, random, store_data, memory_read, max_ids_to_read):
+    # Read memories for training
+    if memory_read:
+        memories = read_from_csv(data_output_location, initial_food_rate, initial_organism_rate, grid_size, max_ids_to_read)
+    else:
+        memories = None
+
     for game in range(games):
         history = {}
 
@@ -19,7 +26,7 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
         # Add food
         game_grid = randomly_add_food(game_grid, initial_food_rate)
         # Add organisms
-        game_grid = randomly_add_organisms(game_grid, initial_organism_rate)
+        game_grid = randomly_add_organisms(game_grid, initial_organism_rate, memories)
 
         if gui:
             pygame.init()
@@ -135,11 +142,16 @@ def randomly_add_food(game_grid, probability):
     return game_grid
 
 
-def randomly_add_organisms(game_grid, probability):
+def randomly_add_organisms(game_grid, probability, memories=None):
     for row in range(len(game_grid)):
         for column in range(len(game_grid[row])):
             if decision(probability):
-                game_grid[row][column] = Organism(row, column)
+                if memories:
+                    organism = Organism(row, column, memories=memories)
+                else:
+                    organism = Organism(row, column)
+                game_grid[row][column] = organism
+
     return game_grid
 
 
@@ -157,21 +169,65 @@ def decision(probability):
     return random.random() < probability
 
 
+def add_file_information_to_name(data_location, initial_food_spawn, initial_organism_spawn, grid_size):
+    return data_location.split(".")[0] + "_" + str(initial_food_spawn) + "_" + \
+               str(initial_organism_spawn) + "_" + str(grid_size) + ".csv"
+
+
 def write_to_csv(data, data_output_location, initial_food_spawn, initial_organism_spawn, grid_size):
     # Expect data format to be
     # {
     #   'id': [[(visible tiles), 'action taken', 'reward that step (difference between energy before/after)']]
     # }
     history_to_write = []
+    filename = add_file_information_to_name(data_output_location, initial_food_spawn, initial_organism_spawn, grid_size)
     for organism in data:
         for row in data[organism]:
             history_to_write.append(row)
-    filename = data_output_location.split(".")[0] + "_" + str(initial_food_spawn) + "_" + \
-                   str(initial_organism_spawn) + "_" + str(grid_size) + ".csv"
     with open(filename, 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
         spamwriter.writerows(history_to_write)
+
+
+def read_from_csv(data_location, initial_food_spawn, initial_organism_spawn, grid_size, ids_to_read):
+    memories = {}
+    filename = add_file_information_to_name(data_location, initial_food_spawn, initial_organism_spawn, grid_size)
+    print("Reading in past memories from log for " + str(ids_to_read) + " ids")
+    with open(filename, newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+        id = ''
+        ids_read = 0
+        for row in reader:
+            if id != row[0] and id != '':
+                if len(memories[id]) < BATCH_SIZE:
+                    print("Memory length too small for batch size")
+                    memories.pop(id, None)
+                    ids_read -= 1
+                else:
+                    ids_read += 1
+            if ids_read >= ids_to_read:
+                break
+            id = row[0]
+
+            if id not in memories:
+                memories[id] = []
+            converted_row = []
+            for index in range(len(row)):
+                if index == len(row) - 1:
+                    converted_row.append(bool(row[index]))
+                elif index == 0:
+                    converted_row.append(row[index])
+                else:
+                    converted_row.append(int(row[index]))
+            visible_tiles = np.array([converted_row[1:25]])
+            action = converted_row[25]
+            reward = converted_row[26]
+            next_visible_tiles = np.array([converted_row[27:51]])
+            done = converted_row[51]
+            new_record = (visible_tiles, action, reward, next_visible_tiles, done)
+            memories[id].append(new_record)
+    return memories
 
 
 if __name__ == '__main__':
@@ -184,6 +240,9 @@ if __name__ == '__main__':
     parser.add_argument("--data-output-location", help="Where to output the recorded data", default="data/life.csv")
     parser.add_argument("--no-gui", help="Don't render any GUI elements. Useful for quick data collection", action="store_true")
     parser.add_argument("--random", help="Randomly perform actions instead of prediction", action="store_true")
+    parser.add_argument("--no-memory-read", help="Don't use log to train network", action="store_true")
+    parser.add_argument("--max-ids-to-read", help="The maximum amount of ids to read from the log file", type=int, default=1)
     args = parser.parse_args()
-    main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui, args.games, args.random, args.store_data)
+    main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui, args.games, args.random, args.store_data, not args.no_memory_read, args.max_ids_to_read)
+
 

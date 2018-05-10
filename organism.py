@@ -24,7 +24,7 @@ BATCH_SIZE = 32
 
 
 class Organism:
-    def __init__(self, row, column, state_size=24, action_size=13, genome=None, parent_ids=None):
+    def __init__(self, row, column, state_size=24, action_size=13, genome=None, parent_ids=None, memories=None):
         self.id = str(uuid.uuid4())
         self.color = BLUE
         self.width = 10
@@ -48,6 +48,8 @@ class Organism:
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model()
+        if memories:
+            self.train_from_initial(memories)
 
     def _get_visible_tiles(self, game_grid, organism_row=None, organism_column=None):
         if not organism_row:
@@ -271,8 +273,8 @@ class Organism:
         act_values = self.model.predict(visible_tiles)
         # Do the action with the highest value that is possible
         sorted_actions = np.argsort(act_values[0])
+        print("Predicted action for " + str(self.id))
         for action in sorted_actions:
-            print("Predicted action for " + str(self.id))
             new_state, reward = self._do_action(state, action)
             if new_state:
                 new_visible_tiles = self._get_visible_tiles(new_state)
@@ -281,15 +283,20 @@ class Organism:
                 return new_state
 
     def act(self, state):
-        print("Action for " + str(self.id))
         new_state = self.act_from_prediction(state)
         if len(self.memory) > BATCH_SIZE:
             self.replay()
         return new_state
 
-    def replay(self, batch_size=BATCH_SIZE):
-        print("Replaying for " + str(self.id))
-        minibatch = random.sample(self.memory, batch_size)
+    def replay(self, memory=None, batch_size=BATCH_SIZE):
+        if not memory:
+            print("Replaying for " + str(self.id))
+            memory = self.memory
+
+        if len(memory) < batch_size:
+            return
+
+        minibatch = random.sample(memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
@@ -300,3 +307,8 @@ class Organism:
             self.model.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+
+    def train_from_initial(self, memories, batch_size=BATCH_SIZE):
+        print("Training initial data for " + str(self.id))
+        for organism_memory in memories:
+            self.replay(memories[organism_memory], batch_size)
