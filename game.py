@@ -61,13 +61,12 @@ def organism_action_step(game_grid):
         for column in range(len(game_grid[0])):
             obj = game_grid[row][column]
             if type(obj) == Organism:
-                game_grid, energy, visible_tiles, choice = obj.random_action(game_grid)
-                new_record = []
-                new_record.append(obj.id)
+                game_grid, reward, visible_tiles, choice = obj.random_action(game_grid)
+                new_record = [obj.id]
                 for tile in visible_tiles:
                     new_record.append(tile)
                 new_record.append(choice)
-                new_record.append(energy)
+                new_record.append(reward)
                 if obj.id not in history:
                     history[obj.id] = [new_record]
                 else:
