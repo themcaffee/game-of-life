@@ -1,3 +1,5 @@
+import uuid
+
 from food import Food
 import numpy as np
 
@@ -8,9 +10,15 @@ ENERGY_FROM_EATING = 50
 ATTEMPT_LIMIT = 50
 ENERGY_FROM_MOVING = -1
 ENERGY_FROM_MATING = -1
+# Rewards for model
+REWARD_FROM_EATING = 100
+REWARD_FROM_MOVING = -1
+REWARD_FROM_MATING = 50
+
 
 class Organism:
     def __init__(self, row, column, genome=None, parent_ids=None):
+        self.id = str(uuid.uuid4())
         self.color = BLUE
         self.width = 10
         self.height = 10
@@ -128,7 +136,15 @@ class Organism:
         self.energy += ENERGY_FROM_MATING
         if self.energy <= 0:
             return self._die(game_grid)
-        # TODO placement of baby
+
+        # Random placement of baby
+        searching = True
+        while searching:
+            random_row = np.random.randint(0, len(game_grid))
+            random_col = np.random.randint(0, len(game_grid[0]))
+            if not game_grid[random_row][random_col]:
+                game_grid[random_row][random_col] = Organism(random_row, random_col)
+                searching = False
         return game_grid
 
     def mate_up(self, game_grid):
@@ -149,7 +165,7 @@ class Organism:
     def random_action(self, game_grid):
         attempt = 0
         visible_tiles = self._get_visible_tiles(game_grid)
-        energy = 0
+        reward = 0
         choice = 12
         while attempt <= ATTEMPT_LIMIT:
             choice = np.random.randint(0, 12)
@@ -193,11 +209,20 @@ class Organism:
                 new_grid = self.do_nothing(game_grid)
                 energy = 0
 
+            if choice == 0 or choice == 1 or choice == 2 or choice == 3:
+                reward = REWARD_FROM_MOVING
+            elif choice == 4 or choice == 5 or choice == 6 or choice == 7:
+                reward = REWARD_FROM_EATING
+            elif choice == 8 or choice == 9 or choice == 10 or choice == 11:
+                reward = REWARD_FROM_MATING
+            else:
+                reward = 0
+
             if new_grid:
-                return new_grid, energy, visible_tiles, choice
+                return new_grid, reward, visible_tiles, choice
             else:
                 attempt += 1
-        return self.do_nothing(game_grid), energy, visible_tiles, choice
+        return self.do_nothing(game_grid), reward, visible_tiles, choice
 
 
 
