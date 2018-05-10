@@ -48,8 +48,9 @@ class Organism:
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model()
-        if memories:
-            self.train_from_initial(memories)
+        self.past_memories = memories
+        if self.past_memories:
+            self.train_from_initial(self.past_memories)
 
     def _get_visible_tiles(self, game_grid, organism_row=None, organism_column=None):
         if not organism_row:
@@ -172,7 +173,7 @@ class Organism:
             random_row = np.random.randint(0, len(game_grid) - 1)
             random_col = np.random.randint(0, len(game_grid[0]) - 1)
             if not game_grid[random_row][random_col]:
-                game_grid[random_row][random_col] = Organism(random_row, random_col)
+                game_grid[random_row][random_col] = Organism(random_row, random_col, memories=self.past_memories)
                 searching = False
         return game_grid
 
@@ -284,8 +285,6 @@ class Organism:
 
     def act(self, state):
         new_state = self.act_from_prediction(state)
-        if len(self.memory) > BATCH_SIZE:
-            self.replay()
         return new_state
 
     def replay(self, memory=None, batch_size=BATCH_SIZE):
