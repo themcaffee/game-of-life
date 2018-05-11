@@ -22,7 +22,6 @@ def main(arguments_file, input_file):
     clock = pygame.time.Clock()
 
     print("Starting game sim")
-    print(str(len(game_states)))
     for state in game_states:
         clock.tick(FRAME_RATE)
         for event in pygame.event.get():

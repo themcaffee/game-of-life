@@ -40,7 +40,8 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
         steps = 0
 
         if store_history:
-            game_states.append(game_grid)
+            converted_game_state = convert_game_state(game_grid)
+            game_states.append(converted_game_state)
 
         while not done and steps <= MAX_STEPS:
             # Let all organisms do one action
@@ -71,7 +72,8 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
 
             # Append the game states to the log
             if store_history:
-                game_states.append(game_grid)
+                converted_game_state = convert_game_state(game_grid)
+                game_states.append(converted_game_state)
 
         if store_data:
             write_to_csv(history, data_output_location, initial_food_rate, initial_organism_rate, grid_size)
@@ -276,10 +278,9 @@ def convert_game_state(game_state):
 def write_game_states_log(game_states):
     # Record a single state of the game
     log_filename = "data/history_log.csv"
-    converted_game_states = convert_game_states_log(game_states)
     with open(log_filename, "w", newline="") as csvfile:
         writer = csv.writer(csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL)
-        writer.writerows(converted_game_states)
+        writer.writerows(game_states)
 
 
 if __name__ == '__main__':
