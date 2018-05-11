@@ -48,7 +48,6 @@ python game.py -h
 
 #### TODOs
 
-- Replay with a GUI given a log file (Useful for training w/o GUI and then viewing it later)
 - Create model based off genome
 - Reproduction using genomes
 
