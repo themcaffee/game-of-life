@@ -7,7 +7,7 @@ import numpy as np
 from food import Food
 from organism import Organism, BATCH_SIZE
 
-BLACK = 0, 0, 0
+SCREEN_BACKGROUND = 0, 0, 0
 MAX_STEPS = 1000
 
 
@@ -64,7 +64,7 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
                     if event.type == pygame.QUIT:
                         done = True
                 # Draw stuff onto screen
-                screen.fill(BLACK)
+                screen.fill(SCREEN_BACKGROUND)
                 draw_objects(game_grid, screen)
                 # Update the screen with what has been drawn
                 pygame.display.flip()

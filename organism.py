@@ -8,7 +8,9 @@ from keras.optimizers import Adam
 
 from food import Food
 
-BLUE = (0, 0, 255)
+ORGANISM_COLOR = (0, 0, 255)
+ORGANISM_WIDTH = 10
+ORGANISM_HEIGHT = 10
 INITIAL_ENERGY = 100
 MAX_ENERGY = 200
 ENERGY_FROM_EATING = 50
@@ -26,9 +28,9 @@ BATCH_SIZE = 32
 class Organism:
     def __init__(self, row, column, state_size=24, action_size=13, genome=None, parent_ids=None, memories=None):
         self.id = str(uuid.uuid4())
-        self.color = BLUE
-        self.width = 10
-        self.height = 10
+        self.color = ORGANISM_COLOR
+        self.width = ORGANISM_WIDTH
+        self.height = ORGANISM_HEIGHT
         # Set position in game grid
         self._set_position(row, column)
         # Make solid
