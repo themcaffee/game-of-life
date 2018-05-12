@@ -18,6 +18,19 @@ python game.py
 python game.py -h
 ```
 
+### Generate training data
+
+```
+python game.py --random --store-data --no-gui --games=15 --no-memory-read
+```
+
+### Play using genomes + neural networks and then replay it after
+
+```
+python game.py --max-ids-to-read=50 --no-gui --store-history
+python play_game_log.py -i data/history_log.csv -a data/history_arguments.csv
+```
+
 ### Basic game info
 
 #### Organisms
@@ -48,6 +61,5 @@ python game.py -h
 
 #### TODOs
 
-- Create model based off genome
-- Reproduction using genomes
+- Better storage of history log + arguments and allow for different naming schema
 

@@ -1,6 +1,8 @@
 import hashlib
 import random
 
+import copy
+
 
 class Genome:
     def __init__(self, organism_id=0, geneparam=None, mom_id=0, dad_id=0):
