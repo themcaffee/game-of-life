@@ -7,6 +7,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 
 from food import Food
+from genome import Genome
 
 BLUE = (0, 0, 255)
 INITIAL_ENERGY = 100
@@ -21,22 +22,24 @@ REWARD_FROM_MOVING = -1
 REWARD_FROM_MATING = 50
 REWARD_FROM_DYING = -1000
 BATCH_SIZE = 32
+MUTATE_CHANCE = 0.01
 
 
 class Organism:
-    def __init__(self, row, column, state_size=24, action_size=13, genome=None, parent_ids=None, memories=None):
+    def __init__(self, row, column, state_size=24, action_size=13, genome=None, memories=None):
         self.id = str(uuid.uuid4())
         self.color = BLUE
         self.width = 10
         self.height = 10
         # Set position in game grid
         self._set_position(row, column)
-        # Make solid
-        self.generation = 0
-        self.genome = genome
-        self.parent_ids = parent_ids
         self.energy = INITIAL_ENERGY
         self.alive = True
+        if not genome:
+            self.genome = Genome(organism_id=self.id)
+        else:
+            self.genome = genome
+            self.genome.organism_id = self.id
 
         # DQN Stuff
         self.state_size = state_size
@@ -47,7 +50,7 @@ class Organism:
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
-        self.model = self._build_model()
+        self.model = self._build_model(self.genome.geneparam)
         self.past_memories = memories
         if self.past_memories:
             self.train_from_initial(self.past_memories)
@@ -173,9 +176,38 @@ class Organism:
             random_row = np.random.randint(0, len(game_grid) - 1)
             random_col = np.random.randint(0, len(game_grid[0]) - 1)
             if not game_grid[random_row][random_col]:
-                game_grid[random_row][random_col] = Organism(random_row, random_col, memories=self.past_memories)
+                genome = self._combine_genomes(game_grid[row][column], self)
+                game_grid[random_row][random_col] = Organism(random_row, random_col, genome=genome, memories=self.past_memories)
                 searching = False
         return game_grid
+
+    def _combine_genomes(self, mom, dad):
+        child_gene = {}
+        mom_gene = mom.genome.geneparam
+        dad_gene = dad.genome.geneparam
+
+        # Choose the optimizer
+        child_gene['optimizer'] = random.choice([mom_gene['optimizer'], dad_gene['optimizer']])
+
+        # Combine the layers
+        max_len = max(len(mom_gene['layers']), len(dad_gene['layers']))
+        child_layers = []
+        for pos in range(max_len):
+            from_mom = bool(random.getrandbits(1))
+            # Add the layer from the correct parent IF it exists. Otherwise add nothing
+            if from_mom and len(mom_gene['layers']) > pos:
+                child_layers.append(mom_gene['layers'][pos])
+            elif not from_mom and len(dad_gene['layers']) > pos:
+                child_layers.append(dad_gene['layers'][pos])
+        child_gene['layers'] = child_layers
+
+        child = Genome(child_gene, mom_id=mom.id, dad_id=dad.id)
+
+        # Randomly mutate one gene
+        if MUTATE_CHANCE > random.random():
+            child.mutate_one_gene()
+
+        return child
 
     def mate_up(self, game_grid):
         return self._mate(game_grid, self.row, self.column - 1)
@@ -251,11 +283,35 @@ class Organism:
 
         return new_grid, reward
 
-    def _build_model(self):
-        # Neural Net for Deep-Q learning Model
+    def _build_model_simple(self):
+        """
+        A simple model not using genes
+        """
         model = Sequential()
         model.add(Dense(24, input_dim=self.state_size, activation='relu'))
         model.add(Dense(24, activation='relu'))
+        model.add(Dense(self.action_size, activation='linear'))
+        model.compile(loss='mse',
+                      optimizer=Adam(lr=self.learning_rate))
+        return model
+
+    def _build_model(self, gene_param):
+        """
+        Build the neural network from the given gene parameters
+        """
+        nb_layers = len(gene_param)
+
+        model = Sequential()
+
+        for i in range(nb_layers - 1):
+            nb_neurons = gene_param['layers'][i]['nb_neurons']
+            activation = gene_param['layers'][i]['activation']
+
+            if i == 0:
+                model.add(Dense(nb_neurons, input_dim=self.state_size, activation=activation))
+            else:
+                model.add(Dense(nb_neurons, activation=activation))
+
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse',
                       optimizer=Adam(lr=self.learning_rate))
