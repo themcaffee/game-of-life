@@ -7,11 +7,11 @@ import numpy as np
 from food import Food
 from organism import Organism, BATCH_SIZE
 
-BLACK = 0, 0, 0
+SCREEN_BACKGROUND = 0, 0, 0
 MAX_STEPS = 1000
 
 
-def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui, games, random, store_data, memory_read, max_ids_to_read):
+def main(grid_size, initial_food_rate, initial_organism_rate, data_output_location, gui, games, random, store_data, memory_read, max_ids_to_read, store_history):
     # Read memories for training
     if memory_read:
         memories = read_from_csv(data_output_location, initial_food_rate, initial_organism_rate, grid_size, max_ids_to_read)
@@ -20,6 +20,9 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
 
     for game in range(games):
         history = {}
+        game_states = []
+
+        write_game_states_arguments(grid_size, initial_food_rate, initial_organism_rate, random, memory_read, max_ids_to_read)
 
         # Create the game grid
         game_grid = create_game_grid(grid_size)
@@ -35,6 +38,10 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
 
         done = False
         steps = 0
+
+        if store_history:
+            converted_game_state = convert_game_state(game_grid)
+            game_states.append(converted_game_state)
 
         while not done and steps <= MAX_STEPS:
             # Let all organisms do one action
@@ -58,13 +65,21 @@ def main(grid_size, initial_food_rate, initial_organism_rate, data_output_locati
                     if event.type == pygame.QUIT:
                         done = True
                 # Draw stuff onto screen
-                screen.fill(BLACK)
+                screen.fill(SCREEN_BACKGROUND)
                 draw_objects(game_grid, screen)
                 # Update the screen with what has been drawn
                 pygame.display.flip()
 
+            # Append the game states to the log
+            if store_history:
+                converted_game_state = convert_game_state(game_grid)
+                game_states.append(converted_game_state)
+
         if store_data:
             write_to_csv(history, data_output_location, initial_food_rate, initial_organism_rate, grid_size)
+
+        if store_history:
+            write_game_states_log(game_states)
 
         if gui:
             pygame.quit()
@@ -229,6 +244,45 @@ def read_from_csv(data_location, initial_food_spawn, initial_organism_spawn, gri
     return memories
 
 
+def write_game_states_arguments(grid_size, initial_food_rate, initial_organism_rate, random,  memory_read, max_ids_to_read):
+    # Record the arguments of the game
+    arguments_filename = "data/history_arguments.csv"
+    with open(arguments_filename, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL)
+        game_arguments = [grid_size, initial_food_rate, initial_organism_rate, random, memory_read, max_ids_to_read]
+        writer.writerow(game_arguments)
+
+
+def convert_game_states_log(game_states):
+    # Convert game state objects to ints
+    converted_game_states = []
+    for state in game_states:
+        converted_game_states.append(convert_game_state(state))
+    return converted_game_states
+
+
+def convert_game_state(game_state):
+    converted_game_state = []
+    for row in range(len(game_state) - 1):
+        converted_game_state.append([])
+        for column in range(len(game_state[0]) - 1):
+            if not game_state[row][column]:
+                converted_game_state[row].append(0)
+            elif type(game_state[row][column]) == Food:
+                converted_game_state[row].append(1)
+            elif type(game_state[row][column]) == Organism:
+                converted_game_state[row].append(2)
+    return converted_game_state
+
+
+def write_game_states_log(game_states):
+    # Record a single state of the game
+    log_filename = "data/history_log.csv"
+    with open(log_filename, "w", newline="") as csvfile:
+        writer = csv.writer(csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL)
+        writer.writerows(game_states)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--games", help="Number of games to play in a row", type=int, default=1)
@@ -241,7 +295,8 @@ if __name__ == '__main__':
     parser.add_argument("--random", help="Randomly perform actions instead of prediction", action="store_true")
     parser.add_argument("--no-memory-read", help="Don't use log to train network", action="store_true")
     parser.add_argument("--max-ids-to-read", help="The maximum amount of ids to read from the log file", type=int, default=1)
+    parser.add_argument("--store-history", help="Store the entire history of the game to replay it at a later time", action="store_true")
     args = parser.parse_args()
-    main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui, args.games, args.random, args.store_data, not args.no_memory_read, args.max_ids_to_read)
+    main(args.grid_size, args.initial_food_spawn, args.initial_organism_spawn, args.data_output_location, not args.no_gui, args.games, args.random, args.store_data, not args.no_memory_read, args.max_ids_to_read, args.store_history)
 
 
