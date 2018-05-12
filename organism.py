@@ -323,11 +323,6 @@ class Organism:
         self.memory.append((state, action, reward, next_state, done))
 
     def act_from_prediction(self, state):
-        if np.random.rand() <= self.epsilon:
-            print("Random action for " + str(self.id))
-            new_state, reward = self.random_action(state)
-            return new_state
-
         visible_tiles = self._get_visible_tiles(state)
         act_values = self.model.predict(visible_tiles)
         # Do the action with the highest value that is possible
